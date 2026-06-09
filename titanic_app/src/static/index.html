@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Titanic Survival Predictor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .predict-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .predict-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .predict-btn:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .result.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .result.survived {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .result.not-survived {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+
+        .probability {
+            margin-top: 15px;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚢 Titanic Survival Predictor</h1>
+        <p class="subtitle">Enter passenger details to predict survival probability</p>
+        
+        <form id="predictionForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="pclass">Passenger Class:</label>
+                    <select id="pclass" name="pclass" required>
+                        <option value="">Select Class</option>
+                        <option value="1">1st Class</option>
+                        <option value="2">2nd Class</option>
+                        <option value="3">3rd Class</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="sex">Gender:</label>
+                    <select id="sex" name="sex" required>
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="age">Age:</label>
+                    <input type="number" id="age" name="age" min="0" max="100" step="0.1" placeholder="Enter age">
+                </div>
+                
+                <div class="form-group">
+                    <label for="fare">Fare ($):</label>
+                    <input type="number" id="fare" name="fare" min="0" step="0.01" placeholder="Enter fare" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="sibsp">Siblings/Spouses:</label>
+                    <input type="number" id="sibsp" name="sibsp" min="0" max="10" value="0" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="parch">Parents/Children:</label>
+                    <input type="number" id="parch" name="parch" min="0" max="10" value="0" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="embarked">Port of Embarkation:</label>
+                <select id="embarked" name="embarked" required>
+                    <option value="">Select Port</option>
+                    <option value="C">Cherbourg</option>
+                    <option value="Q">Queenstown</option>
+                    <option value="S">Southampton</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="predict-btn">Predict Survival</button>
+        </form>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing passenger data...</p>
+        </div>
+        
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const submitBtn = document.querySelector('.predict-btn');
+            
+            // Show loading state
+            loading.style.display = 'block';
+            result.classList.remove('show');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Predicting...';
+            
+            // Collect form data
+            const formData = new FormData(e.target);
+            const data = {
+                pclass: parseInt(formData.get('pclass')),
+                sex: formData.get('sex'),
+                age: formData.get('age') ? parseFloat(formData.get('age')) : null,
+                sibsp: parseInt(formData.get('sibsp')),
+                parch: parseInt(formData.get('parch')),
+                fare: parseFloat(formData.get('fare')),
+                embarked: formData.get('embarked'),
+                alone: parseInt(formData.get('sibsp')) + parseInt(formData.get('parch')) === 0
+            };
+            
+            try {
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const prediction = await response.json();
+                
+                if (response.ok) {
+                    const survived = prediction.prediction === 1;
+                    const probability = (prediction.survival_probability * 100).toFixed(1);
+                    
+                    result.className = `result ${survived ? 'survived' : 'not-survived'}`;
+                    result.innerHTML = `
+                        <div style="font-size: 24px; margin-bottom: 10px;">
+                            ${survived ? '✅ Likely to Survive' : '❌ Unlikely to Survive'}
+                        </div>
+                        <div class="probability">
+                            Survival Probability: ${probability}%
+                        </div>
+                    `;
+                    
+                    setTimeout(() => {
+                        result.classList.add('show');
+                    }, 100);
+                } else {
+                    result.className = 'result not-survived';
+                    result.innerHTML = `<div>Error: ${prediction.error}</div>`;
+                    result.classList.add('show');
+                }
+            } catch (error) {
+                result.className = 'result not-survived';
+                result.innerHTML = `<div>Error: Failed to connect to server</div>`;
+                result.classList.add('show');
+            }
+            
+            // Hide loading state
+            loading.style.display = 'none';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Predict Survival';
+        });
+    </script>
+</body>
+</html>
+
